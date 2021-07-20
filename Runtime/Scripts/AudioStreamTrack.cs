@@ -7,28 +7,28 @@ using Object = UnityEngine.Object;
 namespace Unity.WebRTC
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="renderer"></param>
     public delegate void OnAudioReceived(AudioClip renderer);
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     public class AudioStreamTrack : MediaStreamTrack
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public event OnAudioReceived OnAudioReceived;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public AudioSource Source { get; private set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public AudioClip Renderer
         {
@@ -63,7 +63,7 @@ namespace Unity.WebRTC
 
             public void Dispose()
             {
-                if(m_clip != null)
+                if (m_clip != null)
                     Object.Destroy(m_clip);
                 m_clip = null;
             }
@@ -104,17 +104,21 @@ namespace Unity.WebRTC
         private AudioStreamRenderer _streamRenderer;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public AudioStreamTrack() : this(WebRTC.Context.CreateAudioTrack(Guid.NewGuid().ToString()))
         {
         }
 
         /// <summary>
-        /// 
+        /// Create a track from an audio source in game to distribute across
+        /// WebRTC.
         /// </summary>
         /// <param name="source"></param>
-        public AudioStreamTrack(AudioSource source) : this()
+        /// <param name="mute">
+        /// Whether you want the source to not be hearable in game.
+        /// </param>
+        public AudioStreamTrack(AudioSource source, bool mute = false) : this()
         {
             if (source == null)
                 throw new ArgumentNullException("AudioSource argument is null");
@@ -125,6 +129,7 @@ namespace Unity.WebRTC
             _audioSourceRead = source.gameObject.AddComponent<AudioSourceRead>();
             _audioSourceRead.hideFlags = HideFlags.HideInHierarchy;
             _audioSourceRead.onAudioRead += SetData;
+            _audioSourceRead.Mute = mute;
         }
 
         internal AudioStreamTrack(IntPtr ptr) : base(ptr)
@@ -133,7 +138,7 @@ namespace Unity.WebRTC
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public override void Dispose()
         {
@@ -158,7 +163,7 @@ namespace Unity.WebRTC
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="nativeArray"></param>
         /// <param name="channels"></param>
@@ -173,7 +178,7 @@ namespace Unity.WebRTC
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="nativeSlice"></param>
         /// <param name="channels"></param>
@@ -187,7 +192,7 @@ namespace Unity.WebRTC
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="array"></param>
         /// <param name="channels"></param>
