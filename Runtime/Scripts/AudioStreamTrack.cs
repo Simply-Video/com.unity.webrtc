@@ -126,10 +126,7 @@ namespace Unity.WebRTC
         /// WebRTC.
         /// </summary>
         /// <param name="source"></param>
-        /// <param name="mute">
-        /// Whether you want the source to not be hearable in game.
-        /// </param>
-        public AudioStreamTrack(AudioSource source, bool mute = false) : this()
+        public AudioStreamTrack(AudioSource source) : this()
         {
             if (source == null)
                 throw new ArgumentNullException("AudioSource argument is null");
@@ -140,7 +137,6 @@ namespace Unity.WebRTC
             _audioSourceRead = source.gameObject.AddComponent<AudioSourceRead>();
             _audioSourceRead.hideFlags = HideFlags.HideInHierarchy;
             _audioSourceRead.onAudioRead += SetData;
-            _audioSourceRead.Mute = mute;
         }
 
         internal AudioStreamTrack(string label, AudioTrackSource source)
