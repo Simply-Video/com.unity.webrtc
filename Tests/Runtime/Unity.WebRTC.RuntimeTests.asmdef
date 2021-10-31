@@ -1,5 +1,6 @@
 {
     "name": "Unity.WebRTC.RuntimeTests",
+    "rootNamespace": "",
     "references": [
         "Unity.WebRTC",
         "UnityEngine.TestRunner",
@@ -21,7 +22,8 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
+        "UNITY_INCLUDE_TESTS",
+        "FALSE"
     ],
     "versionDefines": [],
     "noEngineReferences": false
