@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.Collections;
 
 namespace Unity.WebRTC
 {
@@ -7,7 +8,7 @@ namespace Unity.WebRTC
     /// </summary>
     /// <param name="data"></param>
     /// <param name="channels"></param>
-    delegate void AudioReadEventHandler(float[] data, int channels, int sampleRate);
+    delegate void AudioReadEventHandler(ref NativeSlice<float> data, int channels, int sampleRate);
 
     /// <summary>
     ///
@@ -24,21 +25,54 @@ namespace Unity.WebRTC
         public bool Mute { get; set; } = false;
 
         private int sampleRate;
+        private int channels;
+        private int prevTimeSamples;
+        private NativeArray<float> nativeArray;
+
+        private AudioClip clip;
+        private AudioSource source;
 
         void OnEnable()
         {
-            sampleRate = GetComponent<AudioSource>().clip.frequency;
+            source = GetComponent<AudioSource>();
+            clip = source.clip;
+            channels = clip.channels;
+            sampleRate = clip.frequency;
+            nativeArray = new NativeArray<float>(
+                clip.channels * clip.samples, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
         }
 
-        void OnAudioFilterRead(float[] data, int channels)
+        private void OnDestroy()
         {
-            onAudioRead?.Invoke(data, channels, sampleRate);
+            nativeArray.Dispose();
+        }
 
-            if (Mute)
+        void OnAudioRead(int current, int prev)
+        {
+            var length = current - prev;
+            var data = new float[length * channels];
+            clip.GetData(data, prev);
+            NativeArray<float>.Copy(data, 0, nativeArray, prev, data.Length);
+            var slice = new NativeSlice<float>(nativeArray, prev, data.Length);
+            onAudioRead?.Invoke(ref slice, channels, sampleRate);
+        }
+
+        void Update()
+        {
+            var timeSamples= source.timeSamples;
+            if (timeSamples == prevTimeSamples)
+                return;
+
+            if (timeSamples < prevTimeSamples)
             {
-                // Clear the audio before it reaches the playback layer
-                System.Array.Clear(data, 0, data.Length);
+                OnAudioRead(clip.samples, prevTimeSamples);
+                prevTimeSamples = 0;
             }
+            if (timeSamples == prevTimeSamples)
+                return;
+
+            OnAudioRead(timeSamples, prevTimeSamples);
+            prevTimeSamples = timeSamples;
         }
     }
 }

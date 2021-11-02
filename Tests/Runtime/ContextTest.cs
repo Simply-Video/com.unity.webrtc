@@ -13,13 +13,13 @@ namespace Unity.WebRTC.RuntimeTest
         [SetUp]
         public void SetUp()
         {
-            NativeMethods.RegisterDebugLog(DebugLog);
+            NativeMethods.RegisterDebugLog(DebugLog, true, NativeLoggingSeverity.LS_VERBOSE);
         }
 
         [TearDown]
         public void TearDown()
         {
-            NativeMethods.RegisterDebugLog(null);
+            NativeMethods.RegisterDebugLog(null, true, NativeLoggingSeverity.LS_VERBOSE);
         }
 
         [Test]
@@ -78,8 +78,10 @@ namespace Unity.WebRTC.RuntimeTest
             var value = NativeMethods.GetHardwareEncoderSupport();
             var context = Context.Create(
                 encoderType: value ? EncoderType.Hardware : EncoderType.Software);
-            var track = context.CreateAudioTrack("audio");
-            context.DeleteMediaStreamTrack(track);
+            var source = context.CreateAudioTrackSource();
+            var track = context.CreateAudioTrack("audio", source);
+            context.DeleteRefPtr(track);
+            context.DeleteRefPtr(source);
             context.Dispose();
         }
 
@@ -95,8 +97,10 @@ namespace Unity.WebRTC.RuntimeTest
             var format = WebRTC.GetSupportedRenderTextureFormat(UnityEngine.SystemInfo.graphicsDeviceType);
             var rt = new UnityEngine.RenderTexture(width, height, 0, format);
             rt.Create();
-            var track = context.CreateVideoTrack("video");
-            context.DeleteMediaStreamTrack(track);
+            var source = context.CreateVideoTrackSource();
+            var track = context.CreateVideoTrack("video", source);
+            context.DeleteRefPtr(track);
+            context.DeleteRefPtr(source);
             context.Dispose();
             UnityEngine.Object.DestroyImmediate(rt);
         }
