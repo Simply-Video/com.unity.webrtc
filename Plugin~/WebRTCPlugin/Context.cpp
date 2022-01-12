@@ -84,7 +84,7 @@ namespace webrtc
 #pragma region open an encode session
     uint32_t Context::s_encoderId = 0;
     uint32_t Context::GenerateUniqueId() { return s_encoderId++; }
-#pragma endregion 
+#pragma endregion
 
     bool Convert(const std::string& str, webrtc::PeerConnectionInterface::RTCConfiguration& config)
     {
@@ -211,6 +211,22 @@ namespace webrtc
         rtc::scoped_refptr<AudioEncoderFactory> audioEncoderFactory = CreateAudioEncoderFactory();
         rtc::scoped_refptr<AudioDecoderFactory>  audioDecoderFactory = CreateAudioDecoderFactory();
 
+        // Apply voice effects
+        rtc::scoped_refptr<AudioProcessing> apm = AudioProcessingBuilder().Create();
+
+        AudioProcessing::Config config;
+        config.noise_suppression.enabled = true;
+        config.noise_suppression.level = AudioProcessing::Config::NoiseSuppression::Level::kVeryHigh;
+
+        config.gain_controller1.enabled = true;
+        config.gain_controller1.analog_level_minimum = 0;
+        config.gain_controller1.analog_level_maximum = 255;
+        config.echo_canceller.enabled = true;
+
+        apm->ApplyConfig(config);
+
+        apm->Initialize();
+
         m_peerConnectionFactory = CreatePeerConnectionFactory(
                                 m_workerThread.get(),
                                 m_workerThread.get(),
@@ -221,7 +237,7 @@ namespace webrtc
                                 std::move(videoEncoderFactory),
                                 std::move(videoDecoderFactory),
                                 nullptr,
-                                nullptr);
+                                apm);
     }
 
     Context::~Context()
@@ -395,9 +411,9 @@ namespace webrtc
     {
         //avoid optimization specially for voice
         cricket::AudioOptions audioOptions;
-        audioOptions.auto_gain_control = false;
-        audioOptions.noise_suppression = false;
-        audioOptions.highpass_filter = false;
+        audioOptions.auto_gain_control = true;
+        audioOptions.noise_suppression = true;
+        audioOptions.echo_cancellation = true;
 
         const rtc::scoped_refptr<UnityAudioTrackSource> source =
             UnityAudioTrackSource::Create(audioOptions);
