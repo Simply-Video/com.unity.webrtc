@@ -17,7 +17,7 @@ namespace Unity.WebRTC
 
         public static Context Create(int id = 0, EncoderType encoderType = EncoderType.Hardware, bool forTest = false)
         {
-            if (encoderType == EncoderType.Hardware && !NativeMethods.GetHardwareEncoderSupport())
+            if (encoderType == EncoderType.Hardware && !WebRTC.HardwareEncoderSupport())
             {
                 throw new ArgumentException("Hardware encoder is not supported");
             }
@@ -172,6 +172,19 @@ namespace Unity.WebRTC
             NativeMethods.ContextDeleteDataChannel(self, ptr);
         }
 
+        public void DataChannelRegisterOnMessage(IntPtr channel, DelegateNativeOnMessage callback)
+        {
+            NativeMethods.DataChannelRegisterOnMessage(self, channel, callback);
+        }
+        public void DataChannelRegisterOnOpen(IntPtr channel, DelegateNativeOnOpen callback)
+        {
+            NativeMethods.DataChannelRegisterOnOpen(self, channel, callback);
+        }
+        public void DataChannelRegisterOnClose(IntPtr channel, DelegateNativeOnClose callback)
+        {
+            NativeMethods.DataChannelRegisterOnClose(self, channel, callback);
+        }
+
         public IntPtr CreateMediaStream(string label)
         {
             return NativeMethods.ContextCreateMediaStream(self, label);
@@ -196,7 +209,6 @@ namespace Unity.WebRTC
         {
             NativeMethods.MediaStreamRegisterOnRemoveTrack(self, stream.GetSelfOrThrow(), callback);
         }
-
 
         public void AudioTrackRegisterAudioReceiveCallback(IntPtr track, DelegateAudioReceive callback)
         {
@@ -243,10 +255,10 @@ namespace Unity.WebRTC
             NativeMethods.ContextStopMediaStreamTrack(self, track);
         }
 
-
-        public IntPtr CreateVideoRenderer()
+        public IntPtr CreateVideoRenderer(
+            DelegateVideoFrameResize callback, bool needFlip)
         {
-            return NativeMethods.CreateVideoRenderer(self);
+            return NativeMethods.CreateVideoRenderer(self, callback, needFlip);
         }
 
         public void DeleteVideoRenderer(IntPtr sink)
@@ -302,6 +314,21 @@ namespace Unity.WebRTC
         {
             textureUpdateFunction = textureUpdateFunction == IntPtr.Zero ? GetUpdateTextureFunc() : textureUpdateFunction;
             VideoDecoderMethods.UpdateRendererTexture(textureUpdateFunction, texture, rendererId);
+        }
+
+        internal void InitLocalAudio(IntPtr track, int sampleRate, int channels)
+        {
+            NativeMethods.ContextInitLocalAudio(self, track, sampleRate, channels);
+        }
+
+        internal void UninitLocalAudio(IntPtr track)
+        {
+            NativeMethods.ContextUninitLocalAudio(self, track);
+        }
+
+        internal void ProcessLocalAudio(IntPtr track, IntPtr array, int sampleRate, int channels, int frames)
+        {
+            NativeMethods.ContextProcessLocalAudio(self, track, array, sampleRate, channels, frames);
         }
     }
 }
