@@ -7,7 +7,7 @@ fi
 
 export COMMAND_DIR=$(cd $(dirname $0); pwd)
 export PATH="$(pwd)/depot_tools:$PATH"
-export WEBRTC_VERSION=4389
+export WEBRTC_VERSION=4515
 export OUTPUT_DIR="$(pwd)/out"
 export ARTIFACTS_DIR="$(pwd)/artifacts"
 
@@ -27,6 +27,10 @@ patch -N "src/BUILD.gn" < "$COMMAND_DIR/patches/add_jsoncpp.patch"
 
 # add objc library to use videotoolbox
 patch -N "src/sdk/BUILD.gn" < "$COMMAND_DIR/patches/add_objc_deps.patch"
+
+# avoid crashes when using Full HD resolution with HWA enabled
+# workaround referred from this discussion: https://groups.google.com/g/discuss-webrtc/c/AVeyMXnM0gY
+patch -N "src/sdk/objc/components/video_codec/RTCVideoEncoderH264.mm" < "$COMMAND_DIR/patches/avoid_crashusingvideoencoderh264.patch"
 
 mkdir -p "$ARTIFACTS_DIR/lib"
 

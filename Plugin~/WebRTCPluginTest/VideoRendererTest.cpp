@@ -29,7 +29,8 @@ public:
         m_trackSource = new rtc::RefCountedObject<UnityVideoTrackSource>(
             /*is_screencast=*/ false,
             /*needs_denoising=*/ absl::nullopt);
-        m_renderer = std::make_unique<UnityVideoRenderer>(1);
+        m_callback = &OnFrameSizeChange;
+        m_renderer = std::make_unique<UnityVideoRenderer>(1, m_callback, true);
         m_trackSource->AddOrUpdateSink(m_renderer.get(), rtc::VideoSinkWants());
         m_trackSource->SetEncoder(encoder_.get());
 
@@ -49,6 +50,7 @@ protected:
 
     std::unique_ptr<UnityVideoRenderer> m_renderer;
     rtc::scoped_refptr<UnityVideoTrackSource> m_trackSource;
+    DelegateVideoFrameResize m_callback;
 
     webrtc::VideoFrame::Builder CreateBlackFrameBuilder(int width, int height)
     {
@@ -56,7 +58,14 @@ protected:
             webrtc::I420Buffer::Create(width, height);
 
         webrtc::I420Buffer::SetBlack(buffer);
-        return webrtc::VideoFrame::Builder().set_video_frame_buffer(buffer);
+        return webrtc::VideoFrame::Builder()
+            .set_video_frame_buffer(buffer)
+            .set_timestamp_us(Clock::GetRealTimeClock()->TimeInMicroseconds());
+    }
+
+    static void OnFrameSizeChange(UnityVideoRenderer* renderer, int width, int height)
+    {
+        RTC_LOG(LS_INFO) << StringFormat("OnFrameSizeChanges width:%d height:%d", width, height).c_str();
     }
 
     void SendTestFrame(int width, int height)
@@ -91,13 +100,10 @@ TEST_P(VideoRendererTest, ConvertVideoFrameToTexture)
     int height = 256;
     auto builder = CreateBlackFrameBuilder(width, height);
     m_renderer->OnFrame(builder.build());
-    EXPECT_EQ(0, m_renderer->tempBuffer.size());
-    EXPECT_EQ(nullptr, m_renderer->tempBuffer.data());
 
-    m_renderer->ConvertVideoFrameToTextureAndWriteToBuffer(width, height, libyuv::FOURCC_ARGB);
-    auto bufferSize = width * height * 4;
-    EXPECT_EQ(bufferSize, m_renderer->tempBuffer.size());
-    EXPECT_NE(nullptr, m_renderer->tempBuffer.data());
+    void* data = m_renderer->ConvertVideoFrameToTextureAndWriteToBuffer(
+        width, height, libyuv::FOURCC_ARGB);
+    EXPECT_NE(nullptr, data);
 }
 
 INSTANTIATE_TEST_CASE_P(

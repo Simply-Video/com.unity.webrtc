@@ -348,7 +348,6 @@ Plugin~/CMakeFiles/*
 Plugin~/CMakeScripts/*
 Plugin~/WebRTCPlugin/CMakeFiles/*
 Plugin~/WebRTCPlugin/CMakeScripts/*
-Plugin~/WebRTCPlugin/webrtc.bundle/*
 Plugin~/WebRTCPluginTest/CMakeScripts/*
 
 # XCode 
@@ -386,6 +385,8 @@ Runtime/Plugins/x86_64/*.lib.meta
 Runtime/Plugins/x86_64/*.ilk.meta
 Runtime/Plugins/x86_64/*.pdb.meta
 
+Plugin~/build64
+cmake-3.18.0~
 cmake-3.18.0.meta
 BuildScripts~/build_plugin_android.sh
 android-ndk-r21b.meta
